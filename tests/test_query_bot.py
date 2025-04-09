@@ -24,7 +24,7 @@ def test_env_key_loaded() -> None:
 
 
 def test_embedding_output_shape(
-    embedding_model_fixture: SentenceTransformer,
+    embedding_model_fixture: SentenceTransformer
 ) -> None:
     """Test embedding output shape."""
     vec = embedding_model_fixture.encode(["test string"])
