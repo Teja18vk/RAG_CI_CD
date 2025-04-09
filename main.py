@@ -1,105 +1,109 @@
+"""Process PDFs, split text into chunks, embed,store them in a FAISS index."""
+
 import os
+import pickle
+from typing import List, Dict, Any
+
 import pdfplumber
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from sentence_transformers import SentenceTransformer
 import faiss
 import numpy as np
-import pickle
-from typing import List, Dict, Any, cast
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from sentence_transformers import SentenceTransformer
 
 
 def extract_text_from_pdf(pdf_path: str) -> List[Dict[str, Any]]:
-    extracted_text: List[Dict[str, Any]] = []
+    """Extract cleaned text from each page of a PDF file."""
+    extracted_text = []
     with pdfplumber.open(pdf_path) as pdf:
-        for page_num, page in enumerate(pdf.pages):
-            text = page.extract_text()
+        for pg_num, pg in enumerate(pdf.pages):
+            text = pg.extract_text()
             if text:
                 cleaned_text = " ".join(text.split())
                 extracted_text.append(
                     {
-                        "page_num": page_num + 1,
+                        "page_num": pg_num + 1,
                         "text": cleaned_text,
                     }
                 )
     return extracted_text
 
 
-# PDF folder
-pdf_folder = "pdfs"
-all_chunks: List[Dict[str, Any]] = []
-
-# Text splitter config
-splitter = RecursiveCharacterTextSplitter(
-    chunk_size=1000,
-    chunk_overlap=200,
-)
-
-# Loop and chunk
-for filename in os.listdir(pdf_folder):
-    if filename.endswith(".pdf"):
-        path = os.path.join(pdf_folder, filename)
-        pages = extract_text_from_pdf(path)
-
-        for page in pages:
-            chunks = splitter.split_text(page["text"])
-            for idx, chunk in enumerate(chunks):
-                all_chunks.append(
-                    {
-                        "content": chunk,
-                        "metadata": {
-                            "source": filename,
-                            "page": page["page_num"],
-                            "chunk_index": idx,
-                        },
-                    }
-                )
-
-# Print preview
-for chunk_dict in all_chunks[:3]:
-    meta_dict = cast(Dict[str, Any], chunk_dict.get("metadata", {}))
-    content = str(chunk_dict.get("content", ""))
-
-    print("\n--- Chunk ---")
-    print(
-        f"Source: {meta_dict.get('source', 'N/A')}, "
-        f"Page: {meta_dict.get('page', 'N/A')}, "
-        f"Chunk #: {meta_dict.get('chunk_index', 'N/A')}"
+def load_and_chunk_pdfs(pdf_folder_path: str) -> List[Dict[str, Any]]:
+    """Load PDF files and chunk them into text blocks."""
+    all_chunks = []
+    splitter = RecursiveCharacterTextSplitter(
+        chunk_size=1000,
+        chunk_overlap=200,
     )
-    print(f"Content: {content[:300]}...")
 
-# Load sentence transformer model
-model = SentenceTransformer("all-MiniLM-L6-v2")
+    for filename in os.listdir(pdf_folder_path):
+        if filename.endswith(".pdf"):
+            path = os.path.join(pdf_folder_path, filename)
+            pages = extract_text_from_pdf(path)
 
-# Extract just the content and metadata
-texts: List[str] = []
-metadatas: List[Dict[str, Any]] = []
+            for page_data in pages:
+                chunks = splitter.split_text(page_data["text"])
+                for idx, chunk in enumerate(chunks):
+                    all_chunks.append(
+                        {
+                            "content": chunk,
+                            "metadata": {
+                                "source": filename,
+                                "page": page_data["page_num"],
+                                "chunk_index": idx,
+                            },
+                        }
+                    )
+    return all_chunks
 
-for entry in all_chunks:
-    if isinstance(entry, dict):
-        content = str(entry.get("content", ""))
-        meta_info = cast(Dict[str, Any], entry.get("metadata", {}))
 
-        texts.append(content)
-        metadatas.append(meta_info)
+def preview_chunks(all_chunks: List[Dict[str, Any]]) -> None:
+    """Print a preview of the first few chunks."""
+    for chunk_dict in all_chunks[:3]:
+        meta = chunk_dict["metadata"]
+        content = str(chunk_dict["content"])
+        print("\n--- Chunk ---")
+        print(
+            f"Source: {meta['source']}, Page: {meta['page']}, "
+            f"Chunk #: {meta['chunk_index']}"
+        )
+        print(f"Content: {content[:300]}...")
 
 
-# Create embeddings
-print("🔄 Generating embeddings...")
-embeddings = model.encode(texts)
-embeddings_np = np.array(embeddings).astype("float32")
+def generate_embeddings(
+    all_chunks: List[Dict[str, Any]],
+) -> tuple[np.ndarray, List[Dict[str, Any]]]:
+    """Generate embeddings and return vectors + metadata."""
+    model = SentenceTransformer("all-MiniLM-L6-v2")
+    texts = [str(chunk["content"]) for chunk in all_chunks]
+    metadatas = [chunk["metadata"] for chunk in all_chunks]
+    print("🔄 Generating embeddings...")
+    embeddings = model.encode(texts)
+    embeddings_np = np.array(embeddings).astype("float32")
+    return embeddings_np, metadatas
 
-# Create FAISS index
-dim = embeddings_np.shape[1]
-index = faiss.IndexFlatL2(dim)
-index.add(embeddings_np)
 
-# Save index and metadata
-faiss.write_index(index, "faiss_index.index")
+def main() -> None:
+    """Main function."""
+    pdf_folder_path = "pdfs"
+    all_chunks = load_and_chunk_pdfs(pdf_folder_path)
+    preview_chunks(all_chunks)
 
-with open("metadata.pkl", "wb") as f:
-    pickle.dump(metadatas, f)
+    embeddings_np, metadatas = generate_embeddings(all_chunks)
 
-with open("all_chunks.pkl", "wb") as f:
-    pickle.dump(all_chunks, f)
+    # Create FAISS index
+    index = faiss.IndexFlatL2(embeddings_np.shape[1])
+    index.add(embeddings_np)  # pylint: disable=no-value-for-parameter
+    faiss.write_index(index, "faiss_index.index")
 
-print("✅ Embeddings stored in FAISS index!")
+    with open("metadata.pkl", "wb") as f:
+        pickle.dump(metadatas, f)
+
+    with open("all_chunks.pkl", "wb") as f:
+        pickle.dump(all_chunks, f)
+
+    print("✅ Embeddings stored in FAISS index!")
+
+
+if __name__ == "__main__":
+    main()
