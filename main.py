@@ -69,9 +69,7 @@ for chunk in all_chunks[:3]:
 model = SentenceTransformer("all-MiniLM-L6-v2")
 
 # Extract just the content from chunks
-texts: List[str] = [
-    str(chunk["content"]) for chunk in all_chunks if "content" in chunk
-]
+texts: List[str] = [str(chunk["content"]) for chunk in all_chunks if "content" in chunk]
 metadatas = [chunk["metadata"] for chunk in all_chunks]
 
 # Create embeddings
