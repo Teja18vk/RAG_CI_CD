@@ -13,23 +13,17 @@ def extract_text_from_pdf(pdf_path):
         for page_num, page in enumerate(pdf.pages):
             text = page.extract_text()
             if text:
-                cleaned_text = ' '.join(text.split())
-                extracted_text.append({
-                    "page_num": page_num + 1,
-                    "text": cleaned_text
-                })
+                cleaned_text = " ".join(text.split())
+                extracted_text.append({"page_num": page_num + 1, "text": cleaned_text})
     return extracted_text
 
 
 # PDF folder
-pdf_folder = 'pdfs'
+pdf_folder = "pdfs"
 all_chunks = []
 
 # Text splitter config
-splitter = RecursiveCharacterTextSplitter(
-    chunk_size=1000,
-    chunk_overlap=200
-)
+splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
 
 # Loop and chunk
 for filename in os.listdir(pdf_folder):
@@ -38,16 +32,18 @@ for filename in os.listdir(pdf_folder):
         pages = extract_text_from_pdf(path)
 
         for page in pages:
-            chunks = splitter.split_text(page['text'])
+            chunks = splitter.split_text(page["text"])
             for idx, chunk in enumerate(chunks):
-                all_chunks.append({
-                    "content": chunk,
-                    "metadata": {
-                        "source": filename,
-                        "page": page['page_num'],
-                        "chunk_index": idx
+                all_chunks.append(
+                    {
+                        "content": chunk,
+                        "metadata": {
+                            "source": filename,
+                            "page": page["page_num"],
+                            "chunk_index": idx,
+                        },
                     }
-                })
+                )
 
 # Print preview
 for chunk in all_chunks[:3]:
@@ -61,11 +57,11 @@ for chunk in all_chunks[:3]:
 
 
 # Load a sentence transformer model
-model = SentenceTransformer('all-MiniLM-L6-v2')
+model = SentenceTransformer("all-MiniLM-L6-v2")
 
 # Extract just the content from chunks
-texts = [chunk['content'] for chunk in all_chunks]
-metadatas = [chunk['metadata'] for chunk in all_chunks]
+texts = [chunk["content"] for chunk in all_chunks]
+metadatas = [chunk["metadata"] for chunk in all_chunks]
 
 # Create embeddings
 print("🔄 Generating embeddings...")

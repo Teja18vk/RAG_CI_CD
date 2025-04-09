@@ -37,8 +37,7 @@ for i in indices[0]:
     chunk = all_chunks[i]
     meta = metadatas[i]
     context += (
-        f"\n(Source: {meta['source']}, Page {meta['page']})\n"
-        f"{chunk['content']}\n"
+        f"\n(Source: {meta['source']}, Page {meta['page']})\n" f"{chunk['content']}\n"
     )
 
 # Define prompt

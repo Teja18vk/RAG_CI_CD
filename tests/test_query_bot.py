@@ -5,7 +5,7 @@ from sentence_transformers import SentenceTransformer
 
 
 # Load environment variables for testing
-load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '..', '.env'))
+load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), "..", ".env"))
 
 
 @pytest.fixture
