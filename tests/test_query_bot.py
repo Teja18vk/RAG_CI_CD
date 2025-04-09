@@ -11,8 +11,8 @@ from sentence_transformers import SentenceTransformer
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), "..", ".env"))
 
 
-@pytest.fixture
-def emb_model_fixt() -> SentenceTransformer:
+@pytest.fixture(name="model")
+def embedding_model_fixture() -> SentenceTransformer:
     """Fixture that returns the embedding model."""
     return SentenceTransformer("all-MiniLM-L6-v2")
 
@@ -23,7 +23,7 @@ def test_env_key_loaded() -> None:
     assert os.environ["OPENAI_API_KEY"].startswith("sk-")
 
 
-def test_embedding_output_shape(emb_model_fixt: SentenceTransformer) -> None:
+def test_embedding_output_shape(model: SentenceTransformer) -> None:
     """Test embedding output shape."""
-    vec = emb_model_fixt.encode(["test string"])
+    vec = model.encode(["test string"])
     assert vec.shape[1] == 384
