@@ -4,6 +4,7 @@ from openai import OpenAI
 import pickle
 import faiss
 
+
 # Load environment variables
 load_dotenv()
 client = OpenAI()
@@ -36,15 +37,16 @@ context = ""
 for i in indices[0]:
     chunk = all_chunks[i]
     meta = metadatas[i]
-    context += (
-        f"\n(Source: {meta['source']}, Page {meta['page']})\n"
-        f"{chunk['content']}\n"
-    )
+    source_info = f"\n(Source: {meta['source']}, Page {meta['page']})\n"
+    chunk_text = f"{chunk['content']}\n"
+
+    context += source_info + chunk_text
+
 
 # Define prompt
 prompt = (
-    f"You are a helpful assistant.\n"
-    f"Use the following context to answer the question:\n\n"
+    "You are a helpful assistant. "
+    "Use the following context to answer the question:\n\n"
     f"{context}\n"
     f"Question: {query}\nAnswer:"
 )
