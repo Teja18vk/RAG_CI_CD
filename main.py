@@ -5,6 +5,7 @@ from sentence_transformers import SentenceTransformer
 import faiss
 import numpy as np
 import pickle
+from typing import List, Dict, Any
 
 
 def extract_text_from_pdf(pdf_path: str) -> list[dict]:
@@ -25,7 +26,7 @@ def extract_text_from_pdf(pdf_path: str) -> list[dict]:
 
 # PDF folder
 pdf_folder = "pdfs"
-all_chunks = []
+all_chunks: List[Dict[str, Any]] = []
 
 # Text splitter config
 splitter = RecursiveCharacterTextSplitter(
