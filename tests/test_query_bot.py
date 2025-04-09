@@ -12,7 +12,7 @@ load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), "..", ".env"))
 
 
 @pytest.fixture
-def embedding__model_fixture() -> SentenceTransformer:
+def emb_model_fixt() -> SentenceTransformer:
     """Fixture that returns the embedding model."""
     return SentenceTransformer("all-MiniLM-L6-v2")
 
@@ -23,9 +23,7 @@ def test_env_key_loaded() -> None:
     assert os.environ["OPENAI_API_KEY"].startswith("sk-")
 
 
-def test_embedding_output_shape(
-    embedding_model_fixture: SentenceTransformer
-) -> None:
+def test_embedding_output_shape(emb_model_fixt: SentenceTransformer) -> None:
     """Test embedding output shape."""
-    vec = embedding_model_fixture.encode(["test string"])
+    vec = emb_model_fixt.encode(["test string"])
     assert vec.shape[1] == 384
