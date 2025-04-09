@@ -15,7 +15,7 @@ def extract_text_from_pdf(pdf_path):
             if text:
                 cleaned_text = " ".join(text.split())
                 extracted_text.append({"page_num": page_num + 1, "text": cleaned_text})
-    return extracted_text
+            return extracted_text
 
 
 # PDF folder
