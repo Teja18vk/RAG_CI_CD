@@ -43,7 +43,8 @@ for i in indices[0]:
 
 # Define prompt
 prompt = (
-    f"You are a helpful assistant. Use the following context to answer the question:\n\n"
+    f"You are a helpful assistant.\n" 
+    f"Use the following context to answer the question:\n\n"
     f"{context}\n"
     f"Question: {query}\nAnswer:"
 )
