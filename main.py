@@ -7,7 +7,7 @@ import numpy as np
 import pickle
 
 
-def extract_text_from_pdf(pdf_path):
+def extract_text_from_pdf(pdf_path: str) -> list[dict]:
     extracted_text = []
     with pdfplumber.open(pdf_path) as pdf:
         for page_num, page in enumerate(pdf.pages):
