@@ -1,0 +1,14 @@
+faiss-cpu
+pdfplumber
+pymupdf
+langchain
+sentence-transformers
+python-dotenv
+openai
+pytest
+pytest-cov
+flake8
+black
+pylint
+mypy
+dotenv
