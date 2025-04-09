@@ -9,6 +9,8 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
     steps:
     - name: Checkout code
@@ -46,3 +48,5 @@ jobs:
       with:
         name: coverage-report
         path: coverage.xml
+
+
