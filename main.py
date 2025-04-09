@@ -8,8 +8,7 @@ import pickle
 from typing import List, Dict, Any
 
 
-def extract_text_from_pdf(pdf_path: str) -> List[Dict[str, str | int]]:
-    """Extract cleaned text from each page of a PDF."""
+def extract_text_from_pdf(pdf_path: str) -> List[Dict[str, Any]]:
     extracted_text = []
     with pdfplumber.open(pdf_path) as pdf:
         for page_num, page in enumerate(pdf.pages):
@@ -27,7 +26,7 @@ def extract_text_from_pdf(pdf_path: str) -> List[Dict[str, str | int]]:
 
 # PDF folder
 pdf_folder = "pdfs"
-all_chunks: List[Dict[str, Any]] = []
+all_chunks = []
 
 # Text splitter config
 splitter = RecursiveCharacterTextSplitter(
@@ -57,25 +56,20 @@ for filename in os.listdir(pdf_folder):
 
 # Print preview
 for chunk in all_chunks[:3]:
-    meta = chunk["metadata"]
     print("\n--- Chunk ---")
     print(
-        f"Source: {meta['source']}, "
-        f"Page: {meta['page']}, "
-        f"Chunk #: {meta['chunk_index']}"
+        f"Source: {chunk['metadata']['source']}, "
+        f"Page: {chunk['metadata']['page']}, "
+        f"Chunk #: {chunk['metadata']['chunk_index']}"
     )
-    print(f"Content: {str(chunk['content'])[:300]}...")
+    print(f"Content: {chunk['content'][:300]}...")
 
 # Load a sentence transformer model
 model = SentenceTransformer("all-MiniLM-L6-v2")
 
-# Extract content for embedding
-texts: List[str] = [
-    str(chunk["content"]) for chunk in all_chunks if "content" in chunk
-]
-metadatas: List[Dict[str, Any]] = [
-    chunk["metadata"] for chunk in all_chunks if "metadata" in chunk
-]
+# Extract just the content from chunks
+texts = [chunk["content"] for chunk in all_chunks]
+metadatas = [chunk["metadata"] for chunk in all_chunks]
 
 # Create embeddings
 print("🔄 Generating embeddings...")
