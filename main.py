@@ -5,11 +5,11 @@ from sentence_transformers import SentenceTransformer
 import faiss
 import numpy as np
 import pickle
-from typing import List, Dict, Any
+from typing import List, Dict, Any, cast
 
 
 def extract_text_from_pdf(pdf_path: str) -> List[Dict[str, Any]]:
-    extracted_text = []
+    extracted_text: List[Dict[str, Any]] = []
     with pdfplumber.open(pdf_path) as pdf:
         for page_num, page in enumerate(pdf.pages):
             text = page.extract_text()
@@ -55,27 +55,33 @@ for filename in os.listdir(pdf_folder):
                 )
 
 # Print preview
-for chunk in all_chunks[:3]:
-    meta = chunk["metadata"]
+for chunk_dict in all_chunks[:3]:
+    meta_dict = cast(Dict[str, Any], chunk_dict.get("metadata", {}))
+    content = str(chunk_dict.get("content", ""))
+
     print("\n--- Chunk ---")
     print(
-        f"Source: {meta['source']}, "
-        f"Page: {meta['page']}, "
-        f"Chunk #: {meta['chunk_index']}"
+        f"Source: {meta_dict.get('source', 'N/A')}, "
+        f"Page: {meta_dict.get('page', 'N/A')}, "
+        f"Chunk #: {meta_dict.get('chunk_index', 'N/A')}"
     )
-    print(f"Content: {chunk['content'][:300]}...")
+    print(f"Content: {content[:300]}...")
 
-# Load a sentence transformer model
+# Load sentence transformer model
 model = SentenceTransformer("all-MiniLM-L6-v2")
 
-# Extract just the content from chunks
-
+# Extract just the content and metadata
 texts: List[str] = []
-for chunk in all_chunks:
-    if "content" in chunk:
-        texts.append(str(chunk["content"]))
+metadatas: List[Dict[str, Any]] = []
 
-metadatas = [chunk["metadata"] for chunk in all_chunks]
+for entry in all_chunks:
+    if isinstance(entry, dict):
+        content = str(entry.get("content", ""))
+        meta_info = cast(Dict[str, Any], entry.get("metadata", {}))
+
+        texts.append(content)
+        metadatas.append(meta_info)
+
 
 # Create embeddings
 print("🔄 Generating embeddings...")
