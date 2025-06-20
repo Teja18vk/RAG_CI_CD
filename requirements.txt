@@ -5,6 +5,7 @@ langchain
 sentence-transformers
 python-dotenv
 openai
+flask
 pytest
 pytest-cov
 flake8

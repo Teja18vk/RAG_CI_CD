@@ -4,6 +4,7 @@
 
 import os
 import pytest
+pytest.importorskip("dotenv")
 from dotenv import load_dotenv
 from sentence_transformers import SentenceTransformer
 
