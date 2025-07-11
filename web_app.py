@@ -31,9 +31,6 @@ model = SentenceTransformer("all-MiniLM-L6-v2")
 client = OpenAI()
 
 
-def load_store() -> (
-    tuple[faiss.IndexFlatL2, list[dict[str, object]], list[dict[str, object]]]
-):
     """Load index, metadata and chunks from disk."""
     if os.path.exists(INDEX_FILE):
         index = faiss.read_index(INDEX_FILE)
@@ -61,9 +58,6 @@ def save_store(index: faiss.IndexFlatL2, metadatas: list, chunks: list) -> None:
         pickle.dump(chunks, f)
 
 
-index: faiss.IndexFlatL2
-metadatas: list[dict[str, object]]
-all_chunks: list[dict[str, object]]
 index, metadatas, all_chunks = load_store()
 
 
@@ -90,71 +84,7 @@ def chunk_pdf(file_path: str) -> list[dict[str, object]]:
 
 @app.get("/")
 def index_page() -> str:
-    """Return a single-page interface with async upload and chat."""
-    return """
-    <!doctype html>
-    <html>
-    <head>
-        <meta charset="utf-8">
-        <title>PDF Chat</title>
-        <style>
-            body {font-family: Arial, sans-serif; background:#f7f7f7; padding:20px;}
-            .container {max-width: 600px; margin:auto; background:#fff; padding:20px; box-shadow:0 0 10px rgba(0,0,0,0.1);}
-            h1 {color:#333;}
-            .response-box {border:1px solid #ccc; padding:10px; margin-top:10px; background:#fafafa; min-height:40px;}
-            button {margin-top:5px;}
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <h1>Upload PDF</h1>
-            <form id="upload-form">
-                <input type="file" name="file" required>
-                <button type="submit">Upload</button>
-            </form>
-            <div id="upload-result" class="response-box"></div>
 
-            <h1>Chat</h1>
-            <form id="chat-form">
-                <input id="question" type="text" name="question" style="width:100%" placeholder="Ask a question" required>
-                <button type="submit">Send</button>
-            </form>
-            <div id="chat-result" class="response-box"></div>
-        </div>
-
-        <script>
-        const uploadForm = document.getElementById('upload-form');
-        uploadForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const formData = new FormData(uploadForm);
-            const res = await fetch('/upload', {method: 'POST', body: formData});
-            const data = await res.json();
-            document.getElementById('upload-result').textContent =
-                data.status === 'uploaded' ? 'File uploaded successfully!' : (data.error || 'Upload failed');
-        });
-
-        const chatForm = document.getElementById('chat-form');
-        chatForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const question = document.getElementById('question').value;
-            const res = await fetch('/chat', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({question}),
-            });
-            const data = await res.json();
-            document.getElementById('chat-result').textContent = data.answer || data.error || 'Error';
-        });
-        </script>
-    </body>
-    </html>
-    """
-
-
-@app.post("/upload")
-def upload() -> (
-    tuple[str, int] | tuple[dict[str, object], int] | tuple[dict[str, object]]
-):
     """Handle PDF upload and update FAISS store."""
     if "file" not in request.files:
         return jsonify({"error": "no file"}), 400
@@ -179,11 +109,7 @@ def upload() -> (
 @app.post("/chat")
 def chat() -> tuple[dict[str, object], int] | dict[str, str]:
     """Answer questions using uploaded PDFs."""
-    question = (
-        request.json.get("question")
-        if request.is_json
-        else request.form.get("question")
-    )
+
     if not question:
         return jsonify({"error": "no question"}), 400
 
@@ -194,9 +120,6 @@ def chat() -> tuple[dict[str, object], int] | dict[str, str]:
     for i in indices[0]:
         chunk = all_chunks[i]
         meta = metadatas[i]
-        context += (
-            f"\n(Source: {meta['source']}, Page {meta['page']})\n{chunk['content']}\n"
-        )
 
     prompt = (
         "You are a helpful assistant. "
