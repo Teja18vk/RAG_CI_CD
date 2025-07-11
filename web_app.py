@@ -31,7 +31,6 @@ model = SentenceTransformer("all-MiniLM-L6-v2")
 client = OpenAI()
 
 
-def load_store() -> tuple[faiss.IndexFlatL2, list[dict[str, int]], list[dict[str, str]]]:
     """Load index, metadata and chunks from disk."""
     if os.path.exists(INDEX_FILE):
         index = faiss.read_index(INDEX_FILE)
@@ -85,21 +84,7 @@ def chunk_pdf(file_path: str) -> list[dict[str, object]]:
 
 @app.get("/")
 def index_page() -> str:
-    """Show a very simple upload/chat form."""
-    return (
-        "<html><body>"
-        "<h1>Upload PDF</h1>"
-        "<form action='/upload' method='post' enctype='multipart/form-data'>"
-        "<input type='file' name='file'/><input type='submit' value='Upload'/></form>"
-        "<h1>Chat</h1>"
-        "<form action='/chat' method='post'>"
-        "<input type='text' name='question'/><input type='submit'/></form>"
-        "</body></html>"
-    )
 
-
-@app.post("/upload")
-def upload() -> tuple[str, int] | tuple[dict[str, object], int] | tuple[dict[str, object]]:
     """Handle PDF upload and update FAISS store."""
     if "file" not in request.files:
         return jsonify({"error": "no file"}), 400
@@ -124,7 +109,7 @@ def upload() -> tuple[str, int] | tuple[dict[str, object], int] | tuple[dict[str
 @app.post("/chat")
 def chat() -> tuple[dict[str, object], int] | dict[str, str]:
     """Answer questions using uploaded PDFs."""
-    question = request.json.get("question") if request.is_json else request.form.get("question")
+
     if not question:
         return jsonify({"error": "no question"}), 400
 
@@ -135,7 +120,6 @@ def chat() -> tuple[dict[str, object], int] | dict[str, str]:
     for i in indices[0]:
         chunk = all_chunks[i]
         meta = metadatas[i]
-        context += f"\n(Source: {meta['source']}, Page {meta['page']})\n{chunk['content']}\n"
 
     prompt = (
         "You are a helpful assistant. "
